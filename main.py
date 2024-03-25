@@ -14,14 +14,15 @@ get_data_funds()
 #Cálculo de indicadores
 #rodar retorno() primeiro
 #rodar sharpe antes dos outros indicadores
-
-for stock in Ibovespa_list:
+listinha = ['ABEV3', 'PETR3']
+for stock in listinha:
     retorno(stock)
     volatilidade(stock)
     sharpe(stock)
-    #treynor(data)
+    beta(stock)
+    treynor(stock)
     info_ratio(stock)
-    #sortino(data)
+    sortino(stock)
 t_stop = time.perf_counter()
 print(t_stop-t_start, 'segundos')
 

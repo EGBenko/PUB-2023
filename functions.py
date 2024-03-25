@@ -292,11 +292,12 @@ def sharpe(stock):
     aux = -1
 
     #Verificar desnível nos dados
-    while True:    
-        if pandas.to_datetime(Data_index[aux][:-9]) == pandas.to_datetime(selic_index[-1]):
-            break
-        else:
-            aux = aux - 1
+    if pandas.to_datetime(Data_index[aux][:-9]) >= pandas.to_datetime(selic_index[-1]):
+        while True:    
+            if pandas.to_datetime(Data_index[aux][:-9]) == pandas.to_datetime(selic_index[-1]):
+                break
+            else:
+                aux = aux - 1
 
     while aux < 0:
         Data.drop(Data_index[aux], inplace= True)
@@ -315,15 +316,7 @@ def sharpe(stock):
         Data.loc[index,'Sharpe(12M)'] = (Data.loc[index, 'Retorno(12M)'] - selicdata.loc[index[:-9],'Retorno Selic(12M)'])/ Data.loc[index, 'Volatilidade(%/12M)']
 
     Data.to_csv('data\Processada\\'+stock+'_p.csv')
-    return 
-
-def beta():
-
     return
-
-def treynor(data):
-    
-    return data
 
 def info_ratio(stock):
     Data = pandas.read_csv('data\Processada\\'+stock+'_p.csv',index_col=0)
@@ -413,6 +406,252 @@ def info_ratio(stock):
     Data.to_csv('data\Processada\\'+stock+'_p.csv')
     return
 
-def sortino(data):
-    
-    return data
+def sortino(stock):
+    Data = pandas.read_csv('data\Processada\\'+stock+'_p.csv',index_col=0)
+    selicdata = pandas.read_csv('data\Processada\Selic_p.csv',index_col=0)
+    ibovdata = pandas.read_csv('data\Processada\IBOV_p.csv',index_col=0)
+    Coluna = Data.shape[1]
+    Data.insert(Coluna, 'Sortino(1M)', value=0)
+    Data.insert(Coluna+1, 'Sortino(3M)', value=0)
+    Data.insert(Coluna+2, 'Sortino(6M)', value=0)
+    Data.insert(Coluna+3, 'Sortino(12M)', value=0)
+    selic_index = selicdata.index.values.tolist()
+    Data_index = Data.index.values.tolist()
+    lista=list()
+    aux = 0
+    aux1 = list()
+    aux3 = list()
+    aux6 = list()
+    aux12 = list()
+
+    #Verificar desnível nos dados
+    if pandas.to_datetime(Data_index[aux-1][:-9]) >= pandas.to_datetime(selic_index[-1]):
+        while True:    
+            if pandas.to_datetime(Data_index[aux-1][:-9]) == pandas.to_datetime(selic_index[-1]):
+                break
+            else:
+                aux = aux - 1
+
+    while aux < 0:
+        Data.drop(Data_index[aux], inplace= True)
+        aux = aux + 1
+
+    #1M
+    for index, row in Data.iterrows():
+        min1 = min(Data.loc[index, 'Retorno(1M)']-ibovdata.loc[index, 'Retorno(1M)'], 0)
+        aux1.append(min1**2)
+        if len(aux1) >= 22:
+            aux1.pop(0)
+        if len(aux1)<2:
+            continue
+        
+        Downside1 = np.sqrt(sum(aux1)/len(aux1))
+        if Downside1 == 0:
+            Downside1 = 0.01
+        #Sortino 1M
+        Data.loc[index,'Sortino(1M)'] = (Data.loc[index, 'Retorno(1M)'] - selicdata.loc[index[:-9],'Retorno Selic(1M)'])/ Downside1
+
+    #3M
+    for index, row in Data.iterrows():
+        min3 = min(Data.loc[index, 'Retorno(3M)']-ibovdata.loc[index, 'Retorno(3M)'], 0)
+        aux3.append(min3**2)
+        if len(aux3) >= 64:
+            aux3.pop(0)
+        if len(aux3)<2:
+            continue
+        
+        Downside3 = np.sqrt(sum(aux3)/len(aux3))
+        if Downside3 == 0:
+            Downside3 = 0.01
+        #Sortino 3M
+        Data.loc[index,'Sortino(3M)'] = (Data.loc[index, 'Retorno(3M)'] - selicdata.loc[index[:-9],'Retorno Selic(3M)'])/ Downside3
+
+    #6M
+    for index, row in Data.iterrows():
+        min6 = min(Data.loc[index, 'Retorno(6M)']-ibovdata.loc[index, 'Retorno(6M)'], 0)
+        aux6.append(min6**2)
+        if len(aux6) >= 127:
+            aux6.pop(0)
+        if len(aux6)<2:
+            continue
+        
+        Downside6 = np.sqrt(sum(aux6)/len(aux6))
+        if Downside6 == 0:
+            Downside6 = 0.01
+        #Sortino 6M
+        Data.loc[index,'Sortino(6M)'] = (Data.loc[index, 'Retorno(6M)'] - selicdata.loc[index[:-9],'Retorno Selic(6M)'])/ Downside6
+
+    #12M
+    for index, row in Data.iterrows():
+        min12 = min(Data.loc[index, 'Retorno(12M)']-ibovdata.loc[index, 'Retorno(12M)'], 0)
+        aux12.append(min12**2)
+        if len(aux12) >= 253:
+            aux12.pop(0)
+        if len(aux12)<2:
+            continue
+        
+        Downside12 = np.sqrt(sum(aux12)/len(aux12))
+        if Downside12 == 0:
+            Downside12 = 0.01
+        #Sortino 12M
+        Data.loc[index,'Sortino(12M)'] = (Data.loc[index, 'Retorno(12M)'] - selicdata.loc[index[:-9],'Retorno Selic(12M)'])/ Downside12
+
+
+    Data.to_csv('data\Processada\\'+stock+'_p.csv')
+    return
+
+def beta(stock):
+    Data = pandas.read_csv('data\Processada\\'+stock+'_p.csv',index_col=0)
+    ibovdata = pandas.read_csv('data\Processada\IBOV_p.csv',index_col=0)
+    Coluna = Data.shape[1]
+    Data.insert(Coluna, 'Beta(1M)', value=0)
+    Data.insert(Coluna+1, 'Beta(3M)', value=0)
+    Data.insert(Coluna+2, 'Beta(6M)', value=0)
+    Data.insert(Coluna+3, 'Beta(12M)', value=0)
+    Data_index = Data.index.values.tolist()
+    ibov_index = ibovdata.index.values.tolist()
+    if '2007-12-13 09:00:00' in Data_index:
+        Data.drop('2007-12-13 09:00:00', inplace=True)
+    if '2008-05-20 10:00:00' in Data_index:
+        Data.drop('2008-05-20 10:00:00', inplace=True)
+    aux1 = list()
+    auxibov1 =list()
+    aux3 = list()
+    auxibov3 =list()
+    aux6 = list()
+    auxibov6 =list()
+    aux12 = list()
+    auxibov12 =list()
+
+    #Verificar desnível nos dados
+    aux = 0
+    while True:    
+        if pandas.to_datetime(Data_index[aux]) >= pandas.to_datetime(ibov_index[0]):
+            break
+        else:
+            aux = aux + 1
+
+    while aux > 0:
+        Data.drop(Data_index[aux-1], inplace=True)
+        aux = aux - 1
+
+    #Covariance 1M
+    for index, row in Data.iterrows():
+        s = 0
+        aux1.append(Data.loc[index, 'Retorno(1M)'])
+        auxibov1.append(ibovdata.loc[index, 'Retorno(1M)'])
+        if len(aux1) >= 22:
+            aux1.pop(0)
+            auxibov1.pop(0)
+        if len(aux1)<2:
+            continue
+        xmean = np.mean(aux1)
+        ymean = np.mean(auxibov1)
+        for i in range(len(aux1)):
+            s = s + ((aux1[i]-xmean)*(auxibov1[i]-ymean))
+        covariance = s/len(aux1)
+
+        #Beta 1M
+        if ibovdata.loc[index, 'Variance(1M)']==0:
+            Data.loc[index,'Beta(1M)'] = covariance / 0.1
+        else:
+            Data.loc[index,'Beta(1M)'] = covariance / ibovdata.loc[index, 'Variance(1M)']
+
+    #Covariance 3M
+    for index, row in Data.iterrows():
+        s = 0
+        aux3.append(Data.loc[index, 'Retorno(3M)'])
+        auxibov3.append(ibovdata.loc[index, 'Retorno(3M)'])
+        if len(aux3) >= 64:
+            aux3.pop(0)
+            auxibov3.pop(0)
+        if len(aux3)<2:
+            continue
+        xmean = np.mean(aux3)
+        ymean = np.mean(auxibov3)
+        for i in range(len(aux3)):
+            s = s + ((aux3[i]-xmean)*(auxibov3[i]-ymean))
+        covariance = s/len(aux3)
+
+        #Beta 3M
+        if ibovdata.loc[index, 'Variance(3M)']==0:
+            Data.loc[index,'Beta(3M)'] = covariance / 0.1
+        else:
+            Data.loc[index,'Beta(3M)'] = covariance / ibovdata.loc[index, 'Variance(3M)']
+
+    #Covariance 6M
+    for index, row in Data.iterrows():
+        s = 0
+        aux6.append(Data.loc[index, 'Retorno(6M)'])
+        auxibov6.append(ibovdata.loc[index, 'Retorno(6M)'])
+        if len(aux6) >= 127:
+            aux6.pop(0)
+            auxibov6.pop(0)
+        if len(aux6)<2:
+            continue
+        xmean = np.mean(aux6)
+        ymean = np.mean(auxibov6)
+        for i in range(len(aux6)):
+            s = s + ((aux6[i]-xmean)*(auxibov6[i]-ymean))
+        covariance = s/len(aux6)
+
+        #Beta 6M
+        if ibovdata.loc[index, 'Variance(6M)']==0:
+            Data.loc[index,'Beta(6M)'] = covariance / 0.1
+        else:
+            Data.loc[index,'Beta(6M)'] = covariance / ibovdata.loc[index, 'Variance(6M)']
+
+    #Covariance 12M
+    for index, row in Data.iterrows():
+        s = 0
+        aux12.append(Data.loc[index, 'Retorno(12M)'])
+        auxibov12.append(ibovdata.loc[index, 'Retorno(12M)'])
+        if len(aux12) >= 253:
+            aux12.pop(0)
+            auxibov12.pop(0)
+        if len(aux12)<2:
+            continue
+        xmean = np.mean(aux12)
+        ymean = np.mean(auxibov12)
+        for i in range(len(aux12)):
+            s = s + ((aux12[i]-xmean)*(auxibov12[i]-ymean))
+        covariance = s/len(aux12)
+
+        #Beta 12M
+        if ibovdata.loc[index, 'Variance(12M)']==0:
+            Data.loc[index,'Beta(12M)'] = covariance / 0.1
+        else:
+            Data.loc[index,'Beta(12M)'] = covariance / ibovdata.loc[index, 'Variance(12M)']
+
+    Data.to_csv('data\Processada\\'+stock+'_p.csv')
+    return
+
+def treynor(stock):
+    Data = pandas.read_csv('data\Processada\\'+stock+'_p.csv',index_col=0)
+    selicdata = pandas.read_csv('data\Processada\Selic_p.csv',index_col=0)
+    Coluna = Data.shape[1]
+    Data.insert(Coluna, 'Treynor(1M)', value=0)
+    Data.insert(Coluna+1, 'Treynor(3M)', value=0)
+    Data.insert(Coluna+2, 'Treynor(6M)', value=0)
+    Data.insert(Coluna+3, 'Treynor(12M)', value=0)
+    selic_index = selicdata.index.values.tolist()
+    Data_index = Data.index.values.tolist()
+    lista=list()
+    aux = -1
+
+    #Verificar desnível nos dados (rodar Sharpe primeiro)
+
+    for index, row in Data.iterrows():
+        if Data.loc[index, 'Beta(1M)']==0:
+            continue
+        #Treynor 1M
+        Data.loc[index,'Treynor(1M)'] = (Data.loc[index, 'Retorno(1M)'] - selicdata.loc[index[:-9],'Retorno Selic(1M)'])/ Data.loc[index, 'Beta(1M)']
+        #Treynor 3M
+        Data.loc[index,'Treynor(3M)'] = (Data.loc[index, 'Retorno(3M)'] - selicdata.loc[index[:-9],'Retorno Selic(3M)'])/ Data.loc[index, 'Beta(3M)']
+        #Treynor 6M
+        Data.loc[index,'Treynor(6M)'] = (Data.loc[index, 'Retorno(6M)'] - selicdata.loc[index[:-9],'Retorno Selic(6M)'])/ Data.loc[index, 'Beta(6M)']
+        #Treynor 12M
+        Data.loc[index,'Treynor(12M)'] = (Data.loc[index, 'Retorno(12M)'] - selicdata.loc[index[:-9],'Retorno Selic(12M)'])/ Data.loc[index, 'Beta(12M)']
+
+    Data.to_csv('data\Processada\\'+stock+'_p.csv')
+    return
